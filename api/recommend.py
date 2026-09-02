@@ -17,7 +17,7 @@ MAX_PLAN_DAYS = 60
 MAX_BODY_BYTES = 10_000
 LEARNER_TYPES = {"중학생", "고등학생", "대학생", "성인"}
 STUDY_TIMES = {"1시간", "2시간", "3시간", "4시간", "5시간 이상"}
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.6-flash"
 
 STUDY_PLAN_SCHEMA = {
     "type": "object",
