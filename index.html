@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="StudyMate는 나에게 맞는 날짜별 공부 계획을 만드는 서비스입니다.">
+  <title>StudyMate | 공부 계획 만들기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#study-plan">공부 계획 입력으로 건너뛰기</a>
+
+  <header class="site-header">
+    <nav class="navigation container" aria-label="주요 메뉴">
+      <a class="logo" href="#home" aria-label="StudyMate 홈">StudyMate</a>
+      <div class="nav-links">
+        <a href="#home">홈</a>
+        <a href="#how-to-use">이용 방법</a>
+        <a href="#study-plan">공부 계획</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home" class="hero section">
+      <div class="container hero-content">
+        <p class="eyebrow">나만의 학습 루틴</p>
+        <h1>나에게 맞는 공부 계획을<br>만들어보세요.</h1>
+        <p class="hero-description">공부할 분량과 기간을 입력하면 날짜별 Todo-list를 만들어드립니다.</p>
+        <a class="button button-primary" href="#study-plan">공부 계획 만들기</a>
+      </div>
+    </section>
+
+    <section id="how-to-use" class="section how-to-section" aria-labelledby="how-title">
+      <div class="container narrow-container">
+        <div class="section-heading">
+          <p class="eyebrow">HOW IT WORKS</p>
+          <h2 id="how-title">이용 방법</h2>
+        </div>
+        <ol class="steps-list">
+          <li><span>1</span> 나의 학습 정보를 입력합니다.</li>
+          <li><span>2</span> 공부 계획 만들기 버튼을 누릅니다.</li>
+          <li><span>3</span> AI가 날짜별 Todo-list를 생성합니다.</li>
+          <li><span>4</span> 만들어진 계획을 확인하고 공부를 시작합니다.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="study-plan" class="section plan-section" aria-labelledby="plan-title">
+      <div class="container narrow-container">
+        <div class="section-heading">
+          <p class="eyebrow">STUDY PLAN</p>
+          <h2 id="plan-title">공부 계획 만들기</h2>
+          <p>학습 정보를 입력하면 날짜별로 실천할 Todo-list를 확인할 수 있어요.</p>
+        </div>
+
+        <form id="study-form" class="study-form" novalidate>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="learner-type">학습자 유형 <span aria-hidden="true">*</span></label>
+              <select id="learner-type" name="learnerType" required>
+                <option value="">선택해주세요</option>
+                <option value="중학생">중학생</option>
+                <option value="고등학생">고등학생</option>
+                <option value="대학생">대학생</option>
+                <option value="성인">성인</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="study-time">하루 공부 가능 시간 <span aria-hidden="true">*</span></label>
+              <select id="study-time" name="studyTime" required>
+                <option value="">선택해주세요</option>
+                <option value="1시간">1시간</option>
+                <option value="2시간">2시간</option>
+                <option value="3시간">3시간</option>
+                <option value="4시간">4시간</option>
+                <option value="5시간 이상">5시간 이상</option>
+              </select>
+            </div>
+
+            <div class="form-group form-group-full">
+              <label for="subject">과목 / 학습 주제 <span aria-hidden="true">*</span></label>
+              <input id="subject" name="subject" type="text" placeholder="예: 심리학" required>
+            </div>
+
+            <div class="form-group form-group-full">
+              <label for="amount">공부할 분량 <span aria-hidden="true">*</span></label>
+              <input id="amount" name="amount" type="text" placeholder="예: 슬라이드 500장 또는 수학 문제 200개" aria-describedby="amount-help" required>
+              <p id="amount-help" class="field-help">숫자와 단위를 입력하면 날짜별 시작·끝 범위를 나누어 보여드립니다. 계획 기간은 최대 60일입니다.</p>
+            </div>
+
+            <div class="form-group">
+              <label for="start-date">시작일 <span aria-hidden="true">*</span></label>
+              <input id="start-date" name="startDate" type="date" required>
+            </div>
+
+            <div class="form-group">
+              <label for="goal-date">시험일 / 목표일 <span aria-hidden="true">*</span></label>
+              <input id="goal-date" name="goalDate" type="date" required>
+            </div>
+          </div>
+
+          <p class="required-note"><span aria-hidden="true">*</span> 필수 입력 항목</p>
+          <p id="form-message" class="form-message" role="alert" aria-live="polite"></p>
+          <button id="submit-button" class="button button-primary form-button" type="submit">공부 계획 만들기</button>
+        </form>
+
+        <!-- 나중에 API 응답을 받아 이 영역의 내용을 교체합니다. -->
+        <section id="result-area" class="result-area" aria-live="polite" aria-labelledby="result-title" hidden>
+          <div id="loading-state" class="loading-state" hidden>
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <p>AI가 공부 계획을 만들고 있습니다...</p>
+          </div>
+
+          <div id="result-error" class="result-error" role="alert" tabindex="-1" hidden>
+            <h3>계획을 만들지 못했습니다.</h3>
+            <p id="result-error-message"></p>
+          </div>
+
+          <div id="plan-result" hidden>
+            <div class="result-header">
+              <p class="eyebrow">MY STUDY PLAN</p>
+              <h2 id="result-title">📚 나의 공부 계획</h2>
+              <p id="plan-summary" class="plan-summary"></p>
+              <p id="plan-period" class="plan-period"></p>
+            </div>
+            <div id="todo-list" class="todo-list"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="faq" class="section faq-section" aria-labelledby="faq-title">
+      <div class="container narrow-container">
+        <div class="section-heading">
+          <p class="eyebrow">FAQ</p>
+          <h2 id="faq-title">자주 묻는 질문</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>공부할 분량은 어떻게 입력하나요?</summary>
+            <p>슬라이드 500장, 교재 1~8장, 수학 문제 200개처럼 숫자와 단위를 함께 입력해주세요.</p>
+          </details>
+          <details>
+            <summary>날짜별 학습 범위는 어떻게 나뉘나요?</summary>
+            <p>입력한 전체 분량을 시작일부터 목표일까지의 날짜 수로 고르게 나누어, 각 일자의 시작과 끝 범위를 보여드립니다.</p>
+          </details>
+          <details>
+            <summary>나중에 계획을 다시 만들 수 있나요?</summary>
+            <p>네. 입력 내용을 바꾸고 공부 계획 만들기 버튼을 다시 누르면 새 계획을 확인할 수 있습니다.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">© 2026 StudyMate. 나에게 맞는 공부 계획.</div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

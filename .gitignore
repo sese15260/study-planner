@@ -1,0 +1,11 @@
+# API 키와 로컬 환경 변수는 GitHub에 올리지 않습니다.
+.env
+.env.local
+.env.*.local
+
+# Python이 자동으로 만드는 파일
+__pycache__/
+*.py[cod]
+
+# Vercel 프로젝트 연결 정보
+.vercel/
