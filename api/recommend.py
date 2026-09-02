@@ -17,7 +17,7 @@ MAX_PLAN_DAYS = 60
 MAX_BODY_BYTES = 10_000
 LEARNER_TYPES = {"중학생", "고등학생", "대학생", "성인"}
 STUDY_TIMES = {"1시간", "2시간", "3시간", "4시간", "5시간 이상"}
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 STUDY_PLAN_SCHEMA = {
     "type": "object",
@@ -67,6 +67,8 @@ class handler(BaseHTTPRequestHandler):
                 self.send_json(429, {"error": "요청이 많습니다. 잠시 후 다시 시도해주세요."})
             elif status_code in {401, 403}:
                 self.send_json(502, {"error": "AI 기능 설정을 확인해주세요. 잠시 후 다시 시도해주세요."})
+            elif status_code == 404:
+                self.send_json(502, {"error": "AI 모델 설정을 확인하지 못했습니다. 잠시 후 다시 시도해주세요."})
             else:
                 self.send_json(502, {"error": "AI 계획을 만드는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."})
         except (ConnectionError, TimeoutError):
