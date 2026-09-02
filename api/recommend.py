@@ -1,7 +1,7 @@
 """StudyMate의 Vercel Serverless Function입니다.
 
-POST /api/recommend 요청을 받아 OpenAI API로 날짜별 공부 계획을 생성합니다.
-API 키는 코드에 작성하지 않고 Vercel 환경 변수 OPENAI_API_KEY에서만 읽습니다.
+POST /api/recommend 요청을 받아 Gemini API로 날짜별 공부 계획을 생성합니다.
+API 키는 코드에 작성하지 않고 Vercel 환경 변수 GEMINI_API_KEY에서만 읽습니다.
 """
 
 import json
@@ -9,23 +9,23 @@ import os
 from datetime import date
 from http.server import BaseHTTPRequestHandler
 
-from openai import APIConnectionError, APIStatusError, APITimeoutError, OpenAI
+from google import genai
+from google.genai import errors, types
 
 
 MAX_PLAN_DAYS = 60
 MAX_BODY_BYTES = 10_000
 LEARNER_TYPES = {"중학생", "고등학생", "대학생", "성인"}
 STUDY_TIMES = {"1시간", "2시간", "3시간", "4시간", "5시간 이상"}
+GEMINI_MODEL = "gemini-2.5-flash-lite"
 
 STUDY_PLAN_SCHEMA = {
     "type": "object",
-    "additionalProperties": False,
     "properties": {
         "dailyPlans": {
             "type": "array",
             "items": {
                 "type": "object",
-                "additionalProperties": False,
                 "properties": {
                     "date": {"type": "string"},
                     "tasks": {
@@ -60,20 +60,20 @@ class handler(BaseHTTPRequestHandler):
             self.send_json(200, study_plan)
         except ClientInputError as error:
             self.send_json(400, {"error": str(error)})
-        except APITimeoutError:
-            print("OpenAI request timed out.")
-            self.send_json(504, {"error": "AI 응답이 오래 걸리고 있습니다. 잠시 후 다시 시도해주세요."})
-        except APIConnectionError:
-            print("Could not connect to OpenAI API.")
-            self.send_json(503, {"error": "AI 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해주세요."})
-        except APIStatusError as error:
-            print(f"OpenAI API error: status={error.status_code}")
-            if error.status_code == 429:
+        except errors.APIError as error:
+            status_code = getattr(error, "code", None)
+            print(f"Gemini API error: status={status_code}")
+            if status_code == 429:
                 self.send_json(429, {"error": "요청이 많습니다. 잠시 후 다시 시도해주세요."})
+            elif status_code in {401, 403}:
+                self.send_json(502, {"error": "AI 기능 설정을 확인해주세요. 잠시 후 다시 시도해주세요."})
             else:
                 self.send_json(502, {"error": "AI 계획을 만드는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."})
+        except (ConnectionError, TimeoutError):
+            print("Could not connect to Gemini API or the request timed out.")
+            self.send_json(504, {"error": "AI 응답이 오래 걸리고 있습니다. 잠시 후 다시 시도해주세요."})
         except PlanFormatError:
-            print("OpenAI returned an unexpected study-plan format.")
+            print("Gemini returned an unexpected study-plan format.")
             self.send_json(502, {"error": "AI 계획 형식을 확인하지 못했습니다. 다시 시도해주세요."})
         except Exception as error:  # API 키 누락 등 예상하지 못한 서버 오류
             print(f"StudyMate server error: {type(error).__name__}")
@@ -150,10 +150,10 @@ def validate_plan_input(data):
 
 
 def create_ai_plan(plan_input, expected_dates):
-    """OpenAI Responses API로 구조화된 날짜별 계획을 생성합니다."""
-    api_key = os.environ.get("OPENAI_API_KEY")
+    """Gemini API로 구조화된 날짜별 계획을 생성합니다."""
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not configured")
+        raise RuntimeError("GEMINI_API_KEY is not configured")
 
     instructions = """
 당신은 StudyMate의 학습 계획 코치입니다. 반드시 한국어로 답합니다.
@@ -170,26 +170,29 @@ JSON 스키마에 맞는 데이터만 반환하세요.
         **plan_input,
         "requiredDates": expected_dates,
     }
-    client = OpenAI(api_key=api_key, timeout=20.0, max_retries=1)
-    response = client.responses.create(
-        model="gpt-5-mini",
-        instructions=instructions,
-        input=json.dumps(user_input, ensure_ascii=False),
-        text={
-            "format": {
-                "type": "json_schema",
-                "name": "study_plan",
-                "strict": True,
-                "schema": STUDY_PLAN_SCHEMA,
-            }
-        },
-        max_output_tokens=5000,
-        store=False,
-    )
+    client = genai.Client(api_key=api_key)
 
     try:
-        study_plan = json.loads(response.output_text)
-    except json.JSONDecodeError as error:
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=(
+                f"{instructions}\n\n"
+                "아래 학습 정보를 바탕으로 공부 계획을 만드세요.\n"
+                f"{json.dumps(user_input, ensure_ascii=False)}"
+            ),
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=STUDY_PLAN_SCHEMA,
+                temperature=0.4,
+                max_output_tokens=5000,
+            ),
+        )
+    finally:
+        client.close()
+
+    try:
+        study_plan = json.loads(response.text)
+    except (AttributeError, TypeError, json.JSONDecodeError) as error:
         raise PlanFormatError from error
 
     validate_ai_plan(study_plan, expected_dates)

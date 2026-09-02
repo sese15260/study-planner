@@ -2,7 +2,7 @@
 
 학습자 유형, 과목, 공부 분량, 기간을 입력하면 AI가 날짜별 Todo-list를 만들어주는 공부 계획 웹서비스입니다.
 
-> 배포 URL: Vercel 배포 후 이 문장을 실제 주소로 바꾸세요. 예: `https://study-planner.vercel.app`
+> 배포 URL: https://study-planner-sigma-eight.vercel.app/
 
 ## 주요 기능
 
@@ -20,19 +20,19 @@ study-planner/
 ├── index.html          # 화면 구조와 입력 폼
 ├── css/style.css       # 디자인과 모바일 반응형
 ├── js/app.js           # 입력 검증, fetch 요청, 결과 화면 처리
-├── api/recommend.py    # Vercel Python Serverless Function과 OpenAI API 호출
+├── api/recommend.py    # Vercel Python Serverless Function과 Gemini API 호출
 ├── requirements.txt    # Python 패키지 목록
 ├── SERVICE_PLAN.md     # 서비스 기획서
 └── images/             # 제출용 스크린샷과 증빙 자료
 ```
 
-HTML은 섹션·폼·결과 영역의 구조를, CSS는 색상·여백·반응형을, JavaScript는 사용자 입력과 화면 상태를 담당합니다. `api/recommend.py`는 브라우저에 API 키를 보내지 않고 서버에서만 OpenAI API를 호출합니다.
+HTML은 섹션·폼·결과 영역의 구조를, CSS는 색상·여백·반응형을, JavaScript는 사용자 입력과 화면 상태를 담당합니다. `api/recommend.py`는 브라우저에 API 키를 보내지 않고 서버에서만 Gemini API를 호출합니다.
 
 ## AI 요청 흐름
 
 1. 사용자가 폼을 제출하면 `js/app.js`가 빈값과 날짜를 검증합니다.
 2. 정상 값이면 로딩 화면을 보여주고 `fetch('/api/recommend')`로 JSON 데이터를 보냅니다.
-3. `api/recommend.py`가 값을 다시 검증하고, 환경 변수의 `OPENAI_API_KEY`로 OpenAI Responses API를 호출합니다.
+3. `api/recommend.py`가 값을 다시 검증하고, 환경 변수의 `GEMINI_API_KEY`로 Gemini API를 호출합니다.
 4. Python 함수는 날짜별 Todo가 담긴 JSON만 반환합니다.
 5. JavaScript가 성공 결과를 Todo 카드로 표시하고, 오류·지연은 안내 문구로 표시합니다.
 
@@ -40,11 +40,11 @@ HTML은 섹션·폼·결과 영역의 구조를, CSS는 색상·여백·반응�
 
 API 키는 절대로 `app.js`, `recommend.py`, README, GitHub 커밋에 작성하지 마세요.
 
-1. OpenAI Platform에서 API 키를 만듭니다.
+1. [Google AI Studio](https://aistudio.google.com/app/apikey)에서 Gemini API 키를 만듭니다.
 2. Vercel 프로젝트의 **Settings → Environment Variables**에서 아래 이름으로 값을 추가합니다.
 
    ```
-   OPENAI_API_KEY
+   GEMINI_API_KEY
    ```
 
 3. Production과 Preview 환경을 선택해 저장한 뒤 다시 배포합니다.
@@ -67,7 +67,7 @@ Vercel 환경 변수는 코드 밖에서 관리되며, 값 변경은 새 배포�
 
 3. Vercel에서 **Add New → Project**를 누르고 GitHub 저장소를 Import합니다.
 4. Framework Preset은 `Other`로 두고 Root Directory는 이 프로젝트 폴더로 설정합니다.
-5. `OPENAI_API_KEY` 환경 변수를 추가한 뒤 Deploy합니다.
+5. `GEMINI_API_KEY` 환경 변수를 추가한 뒤 Deploy합니다.
 6. 발급된 `https://...vercel.app` 주소를 README의 배포 URL에 붙여 넣고 모바일 브라우저에서 **그 주소를 직접** 엽니다.
 
 `api/recommend.py`는 Vercel에서 자동으로 `/api/recommend` 경로가 됩니다. Vercel은 `api/` 폴더의 Python 함수를 배포할 수 있습니다. [Vercel Python Functions 공식 문서](https://vercel.com/docs/functions/runtimes/python)
