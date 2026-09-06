@@ -6,6 +6,7 @@ API 키는 코드에 작성하지 않고 Vercel 환경 변수 GEMINI_API_KEY에�
 
 import json
 import os
+import time
 from datetime import date
 from http.server import BaseHTTPRequestHandler
 from ipaddress import ip_address
@@ -20,6 +21,7 @@ MAX_BODY_BYTES = 10_000
 LEARNER_TYPES = {"중학생", "고등학생", "대학생", "성인"}
 STUDY_TIMES = {"1시간", "2시간", "3시간", "4시간", "5시간 이상"}
 GEMINI_MODEL = "gemini-3.6-flash"
+MAX_AI_ATTEMPTS = 2
 
 STUDY_PLAN_SCHEMA = {
     "type": "object",
@@ -215,20 +217,33 @@ JSON 스키마에 맞는 데이터만 반환하세요.
     client = genai.Client(api_key=api_key)
 
     try:
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=(
-                f"{instructions}\n\n"
-                "아래 학습 정보를 바탕으로 공부 계획을 만드세요.\n"
-                f"{json.dumps(user_input, ensure_ascii=False)}"
-            ),
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=STUDY_PLAN_SCHEMA,
-                temperature=0.4,
-                max_output_tokens=5000,
-            ),
-        )
+        for attempt in range(MAX_AI_ATTEMPTS):
+            try:
+                response = client.models.generate_content(
+                    model=GEMINI_MODEL,
+                    contents=(
+                        f"{instructions}\n\n"
+                        "아래 학습 정보를 바탕으로 공부 계획을 만드세요.\n"
+                        f"{json.dumps(user_input, ensure_ascii=False)}"
+                    ),
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=STUDY_PLAN_SCHEMA,
+                        temperature=0.4,
+                        max_output_tokens=5000,
+                    ),
+                )
+                break
+            except errors.APIError as error:
+                status_code = getattr(error, "code", None)
+                is_temporary_error = status_code in {429, 500, 502, 503, 504}
+
+                if is_temporary_error and attempt < MAX_AI_ATTEMPTS - 1:
+                    print(f"Gemini temporary error: status={status_code}. Retrying once.")
+                    time.sleep(1)
+                    continue
+
+                raise
     finally:
         client.close()
 
