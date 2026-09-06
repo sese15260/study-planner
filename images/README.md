@@ -7,3 +7,4 @@
 - `validation-error1.png` — 목표일이 시작일보다 빠를 때의 날짜 오류 안내
 - `validation-error2.png` — 필수 입력 누락 안내
 - `codex-process.png` — Codex를 사용해 기능을 수정한 과정
+- `vercel-deployment.png` — Vercel에서 배포가 완료된 상태
