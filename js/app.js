@@ -12,7 +12,8 @@ const planResult = document.getElementById("plan-result");
 const planSummary = document.getElementById("plan-summary");
 const planPeriod = document.getElementById("plan-period");
 const todoList = document.getElementById("todo-list");
-const REQUEST_TIMEOUT_MS = 20000;
+// 날짜별 계획은 AI가 길게 작성할 수 있어 충분한 응답 시간을 둡니다.
+const REQUEST_TIMEOUT_MS = 90000;
 const DEPLOYED_API_URL = "https://studymate-navy.vercel.app/api/recommend";
 
 studyForm.addEventListener("submit", handlePlanSubmit);
