@@ -2,7 +2,7 @@
 
 학습자 유형, 과목, 공부 분량, 기간을 입력하면 AI가 날짜별 Todo-list를 만들어주는 공부 계획 웹서비스입니다.
 
-> 배포 URL: https://study-planner-sigma-eight.vercel.app/
+> 배포 URL: [https://study-planner-sigma-eight.vercel.app/](https://studymate-navy.vercel.app/)
 
 ## 주요 기능
 
