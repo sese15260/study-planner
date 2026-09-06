@@ -68,16 +68,16 @@ async function handlePlanSubmit(event) {
 }
 
 // Live Server는 Python 파일을 실행할 수 없습니다.
-// 따라서 localhost에서만 이미 배포된 API를 사용하고,
-// Vercel 사이트에서는 현재 사이트의 /api/recommend를 그대로 사용합니다.
+// 따라서 Vercel 배포 주소가 아닐 때는 이미 배포된 API를 사용합니다.
+// localhost뿐 아니라 휴대폰에서 접속하는 192.168.x.x 주소도 포함됩니다.
 function getApiUrl() {
-  const localHosts = ["localhost", "127.0.0.1"];
+  const deployedHost = "studymate-navy.vercel.app";
 
-  if (localHosts.includes(window.location.hostname)) {
-    return DEPLOYED_API_URL;
+  if (window.location.hostname === deployedHost) {
+    return "/api/recommend";
   }
 
-  return "/api/recommend";
+  return DEPLOYED_API_URL;
 }
 
 function getFormValues() {

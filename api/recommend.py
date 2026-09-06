@@ -8,6 +8,8 @@ import json
 import os
 from datetime import date
 from http.server import BaseHTTPRequestHandler
+from ipaddress import ip_address
+from urllib.parse import urlparse
 
 from google import genai
 from google.genai import errors, types
@@ -122,15 +124,34 @@ class handler(BaseHTTPRequestHandler):
         self.wfile.write(response_body)
 
     def send_cors_headers(self):
-        """배포 사이트가 아닌 localhost 미리보기에서만 API 접근을 허용합니다."""
+        """Live Server와 같은 내 PC·내 네트워크 미리보기에서만 API 접근을 허용합니다."""
         origin = self.headers.get("Origin", "")
-        is_local_origin = origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")
 
-        if is_local_origin:
+        if is_local_development_origin(origin):
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type")
             self.send_header("Vary", "Origin")
+
+
+def is_local_development_origin(origin):
+    """localhost 또는 192.168.x.x 같은 내부망 Live Server 주소인지 확인합니다."""
+    try:
+        parsed_origin = urlparse(origin)
+        hostname = parsed_origin.hostname
+    except ValueError:
+        return False
+
+    if parsed_origin.scheme != "http" or not hostname:
+        return False
+
+    if hostname == "localhost":
+        return True
+
+    try:
+        return ip_address(hostname).is_private or ip_address(hostname).is_loopback
+    except ValueError:
+        return False
 
 
 def validate_plan_input(data):
