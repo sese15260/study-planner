@@ -6,6 +6,7 @@ API 키는 코드에 작성하지 않고 Vercel 환경 변수 GEMINI_API_KEY에�
 
 import json
 import os
+import re
 import time
 from datetime import date
 from http.server import BaseHTTPRequestHandler
@@ -60,7 +61,18 @@ class handler(BaseHTTPRequestHandler):
         try:
             request_data = self.read_json_request()
             plan_input, expected_dates = validate_plan_input(request_data)
-            study_plan = create_ai_plan(plan_input, expected_dates)
+            try:
+                study_plan = create_ai_plan(plan_input, expected_dates)
+            except errors.APIError as error:
+                status_code = getattr(error, "code", None)
+
+                # API 키·모델 설정 오류가 아닐 때는 사용자가 바로 쓸 수 있는
+                # 날짜별 분량 계획을 대신 만들어 결과 화면을 유지합니다.
+                if status_code not in {401, 403, 404}:
+                    print(f"Gemini API error: status={status_code}. Using fallback plan.")
+                    study_plan = create_fallback_plan(plan_input, expected_dates)
+                else:
+                    raise
             self.send_json(200, study_plan)
         except ClientInputError as error:
             self.send_json(400, {"error": str(error)})
@@ -276,3 +288,64 @@ def validate_ai_plan(study_plan, expected_dates):
 
     if received_dates != expected_dates:
         raise PlanFormatError
+
+
+def create_fallback_plan(plan_input, expected_dates):
+    """Gemini가 일시적으로 응답하지 않을 때에도 사용할 수 있는 기본 계획입니다."""
+    amount_range = parse_amount_range(plan_input["amount"])
+    daily_plans = []
+
+    for index, plan_date in enumerate(expected_dates):
+        if amount_range:
+            start, end, label, unit = split_amount_for_day(amount_range, index, len(expected_dates))
+            range_text = f"{label} {start}~{end}{unit}".strip()
+            tasks = [
+                f"{range_text} 학습하기",
+                f"{range_text} 핵심 개념 정리하기",
+                f"{range_text} 학습 내용 복습하기",
+            ]
+        else:
+            tasks = [
+                f"{plan_input['subject']} {plan_input['amount']} 학습하기",
+                f"{plan_input['subject']} 핵심 개념 3가지 정리하기",
+                "전날 학습 내용 복습하기",
+            ]
+
+        daily_plans.append({"date": plan_date, "tasks": tasks})
+
+    return {"dailyPlans": daily_plans}
+
+
+def parse_amount_range(amount):
+    """'슬라이드 500장', '교재 1~8장'에서 시작·끝 숫자와 단위를 찾습니다."""
+    normalized_amount = amount.replace(",", "").strip()
+    range_match = re.fullmatch(r"(.*?)(\d+)\s*[~\-–]\s*(\d+)\s*([^\d\s]*)", normalized_amount)
+
+    if range_match:
+        label, start, end, unit = range_match.groups()
+        start_number, end_number = int(start), int(end)
+        if end_number >= start_number:
+            return start_number, end_number, label.strip() or "학습 분량", unit.strip()
+
+    total_match = re.fullmatch(r"(.*?)(\d+)\s*([^\d\s]*)", normalized_amount)
+    if total_match:
+        label, total, unit = total_match.groups()
+        total_number = int(total)
+        if total_number > 0:
+            return 1, total_number, label.strip() or "학습 분량", unit.strip()
+
+    return None
+
+
+def split_amount_for_day(amount_range, day_index, total_days):
+    """전체 숫자 분량을 날짜 수만큼 최대한 고르게 나눕니다."""
+    overall_start, overall_end, label, unit = amount_range
+    total_amount = overall_end - overall_start + 1
+
+    if total_amount < total_days:
+        item = overall_start + min(day_index, total_amount - 1)
+        return item, item, label, unit
+
+    day_start = overall_start + (day_index * total_amount) // total_days
+    day_end = overall_start + ((day_index + 1) * total_amount) // total_days - 1
+    return day_start, day_end, label, unit
