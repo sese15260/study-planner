@@ -13,6 +13,7 @@ const planSummary = document.getElementById("plan-summary");
 const planPeriod = document.getElementById("plan-period");
 const todoList = document.getElementById("todo-list");
 const REQUEST_TIMEOUT_MS = 20000;
+const DEPLOYED_API_URL = "https://studymate-navy.vercel.app/api/recommend";
 
 studyForm.addEventListener("submit", handlePlanSubmit);
 
@@ -35,7 +36,7 @@ async function handlePlanSubmit(event) {
   const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const response = await fetch("/api/recommend", {
+    const response = await fetch(getApiUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
@@ -63,6 +64,19 @@ async function handlePlanSubmit(event) {
     window.clearTimeout(timeoutId);
     setSubmitState(false);
   }
+}
+
+// Live Server는 Python 파일을 실행할 수 없습니다.
+// 따라서 localhost에서만 이미 배포된 API를 사용하고,
+// Vercel 사이트에서는 현재 사이트의 /api/recommend를 그대로 사용합니다.
+function getApiUrl() {
+  const localHosts = ["localhost", "127.0.0.1"];
+
+  if (localHosts.includes(window.location.hostname)) {
+    return DEPLOYED_API_URL;
+  }
+
+  return "/api/recommend";
 }
 
 function getFormValues() {

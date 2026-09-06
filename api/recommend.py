@@ -84,6 +84,13 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_json(405, {"error": "POST 요청만 사용할 수 있습니다."})
 
+    def do_OPTIONS(self):
+        """VS Code Live Server의 CORS 사전 요청에 응답합니다."""
+        self.send_response(204)
+        self.send_cors_headers()
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def read_json_request(self):
         content_length = self.headers.get("Content-Length")
 
@@ -106,12 +113,24 @@ class handler(BaseHTTPRequestHandler):
     def send_json(self, status_code, payload):
         response_body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status_code)
+        self.send_cors_headers()
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(response_body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         self.wfile.write(response_body)
+
+    def send_cors_headers(self):
+        """배포 사이트가 아닌 localhost 미리보기에서만 API 접근을 허용합니다."""
+        origin = self.headers.get("Origin", "")
+        is_local_origin = origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:")
+
+        if is_local_origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Vary", "Origin")
 
 
 def validate_plan_input(data):
